@@ -67,14 +67,40 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           exec > /var/log/user-data.log 2>&1
-          set -x
+          set -eux
+
           dnf update -y
           dnf install -y python3-pip git
-          pip3 install flask
+          pip3 install flask --break-system-packages
+
           cd /home/ec2-user
-          git clone https://github.com/X00229873/cloud-poc.git
+          git clone https://github.com/X00229873/cloud-poc.git || true
           cd cloud-poc/apps
-          nohup python3 app.py --host=0.0.0.0 --port=80 > /home/ec2-user/flask.log 2>&1 &
+
+          echo '#!/bin/bash
+          cd /home/ec2-user/cloud-poc/apps
+          nohup python3 app.py --host=0.0.0.0 --port=80 > /home/ec2-user/flask.log 2>&1 &' > /home/ec2-user/start-flask.sh
+          chmod +x /home/ec2-user/start-flask.sh
+
+          cat <<EOF > /etc/systemd/system/flaskapp.service
+          [Unit]
+          Description=Flask App
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/home/ec2-user/start-flask.sh
+          Restart=always
+          User=ec2-user
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          systemctl daemon-reexec
+          systemctl daemon-reload
+          systemctl enable flaskapp.service
+          systemctl start flaskapp.service
       Tags:
         - Key: Name
           Value: FlaskPoC
