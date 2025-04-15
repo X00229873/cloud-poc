@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Deploy a simple Flask app using EC2 and ALB
+Description: Simple EC2 deployment for Flask app (PoC)
 
 Resources:
   VPC:
@@ -13,15 +13,7 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
-
-  Subnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: 10.0.2.0/24
-      MapPublicIpOnLaunch: true
-      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      AvailabilityZone: !Select [0, !GetAZs ""]
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -51,43 +43,16 @@ Resources:
       SubnetId: !Ref Subnet
       RouteTableId: !Ref RouteTable
 
-  Subnet2RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref Subnet2
-      RouteTableId: !Ref RouteTable
-
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow HTTP from ALB
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          SourceSecurityGroupId: !Ref ALBSecurityGroup
-
-  ALBSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow HTTP from internet
+      GroupDescription: Allow HTTP from anywhere
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-
-  ALB:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      Subnets:
-        - !Ref Subnet
-        - !Ref Subnet2
-      SecurityGroups:
-        - !Ref ALBSecurityGroup
-      Scheme: internet-facing
 
   EC2Instance:
     Type: AWS::EC2::Instance
@@ -101,8 +66,9 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          dnf update -y
-          dnf install -y python3-pip git
+          exec > /var/log/user-data.log 2>&1
+          set -x
+          dnf install -y python3 git
           pip3 install flask
           cd /home/ec2-user
           git clone https://github.com/X00229873/cloud-poc.git
@@ -110,32 +76,9 @@ Resources:
           nohup python3 app.py &
       Tags:
         - Key: Name
-          Value: FlaskWebApp
-
-  ALBTargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    DependsOn: EC2Instance
-    Properties:
-      VpcId: !Ref VPC
-      Protocol: HTTP
-      Port: 80
-      TargetType: instance
-      HealthCheckPath: /
-      Targets:
-        - Id: !Ref EC2Instance
-          Port: 80
-
-  ALBListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      LoadBalancerArn: !Ref ALB
-      Port: 80
-      Protocol: HTTP
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref ALBTargetGroup
+          Value: FlaskPoC
 
 Outputs:
-  LoadBalancerURL:
-    Description: "Public URL for your app"
-    Value: !Join ["", ["http://", !GetAtt ALB.DNSName]]
+  EC2PublicIP:
+    Description: "Public IP of the Flask EC2 instance"
+    Value: !GetAtt EC2Instance.PublicIp
