@@ -121,15 +121,16 @@ Resources:
       SecurityGroupIds:
         - !Ref EC2SecurityGroup
       UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash
-          yum update -y
-          yum install -y python3 git
-          pip3 install flask
-          cd /home/ec2-user
-          git clone https://github.com/X00229873/cloud-poc
-          cd cloud-poc/app
-          nohup python3 app.py &
+  Fn::Base64: !Sub |
+    #!/bin/bash
+    dnf update -y
+    dnf install -y python3-pip git
+    pip3 install flask
+    cd /home/ec2-user
+    git clone https://github.com/X00229873/cloud-poc.git
+    cd cloud-poc/apps
+    nohup python3 app.py &
+
       Tags:
         - Key: Name
           Value: FlaskWebApp
