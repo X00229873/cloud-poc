@@ -89,14 +89,18 @@ Resources:
         - !Ref ALBSecurityGroup
       Scheme: internet-facing
 
-  ALBTargetGroup:
+    ALBTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: EC2Instance
     Properties:
       VpcId: !Ref VPC
       Protocol: HTTP
       Port: 80
       TargetType: instance
       HealthCheckPath: /
+      Targets:
+        - Id: !Ref EC2Instance
+          Port: 80
 
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
