@@ -1,11 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Deploy a simple Flask app using EC2 and ALB
 
-Parameters:
-  KeyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: Name of an existing EC2 KeyPair for SSH access
-
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -102,7 +97,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
-      KeyName: !Ref KeyName
+      KeyName: EC2CloudAppDeployment
       ImageId: ami-01ff9fc7721895c6b
       SubnetId: !Ref Subnet
       SecurityGroupIds:
