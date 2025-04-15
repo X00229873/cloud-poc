@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Simple EC2 deployment for Flask app (PoC, no automated install)
+Description: Simple EC2 deployment for Flask app (PoC with automated install)
 
 Resources:
   VPC:
@@ -63,6 +63,16 @@ Resources:
       SubnetId: !Ref Subnet
       SecurityGroupIds:
         - !Ref EC2SecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          dnf update -y
+          dnf install -y python3-pip git
+          pip3 install flask
+          cd /home/ec2-user
+          git clone https://github.com/X00229873/cloud-poc.git
+          cd cloud-poc/apps
+          nohup python3 app.py > /home/ec2-user/flask.log 2>&1 &
       Tags:
         - Key: Name
           Value: FlaskPoC
