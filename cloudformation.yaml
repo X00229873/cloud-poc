@@ -66,7 +66,7 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          dnf install -y python3 git
+          dnf install -y python3 python3-pip git
           pip3 install flask
           cd /home/ec2-user
           git clone https://github.com/X00229873/cloud-poc.git
