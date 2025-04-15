@@ -89,29 +89,6 @@ Resources:
         - !Ref ALBSecurityGroup
       Scheme: internet-facing
 
-    ALBTargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    DependsOn: EC2Instance
-    Properties:
-      VpcId: !Ref VPC
-      Protocol: HTTP
-      Port: 80
-      TargetType: instance
-      HealthCheckPath: /
-      Targets:
-        - Id: !Ref EC2Instance
-          Port: 80
-
-  ALBListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      LoadBalancerArn: !Ref ALB
-      Port: 80
-      Protocol: HTTP
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref ALBTargetGroup
-
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -135,12 +112,28 @@ Resources:
         - Key: Name
           Value: FlaskWebApp
 
-  TargetGroupAttachment:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroupAttachment
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: EC2Instance
     Properties:
-      TargetGroupArn: !Ref ALBTargetGroup
-      TargetId: !Ref EC2Instance
+      VpcId: !Ref VPC
+      Protocol: HTTP
       Port: 80
+      TargetType: instance
+      HealthCheckPath: /
+      Targets:
+        - Id: !Ref EC2Instance
+          Port: 80
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroup
 
 Outputs:
   LoadBalancerURL:
