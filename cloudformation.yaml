@@ -46,12 +46,12 @@ Resources:
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow HTTP from anywhere
+      GroupDescription: Allow HTTP on port 5000 from anywhere
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
+          FromPort: 5000
+          ToPort: 5000
           CidrIp: 0.0.0.0/0
 
   EC2Instance:
@@ -59,7 +59,7 @@ Resources:
     Properties:
       InstanceType: t2.micro
       KeyName: EC2CloudAppDeployment
-      ImageId: ami-0df368112825f8d8f
+      ImageId: ami-0df368112825f8d8f  # Ubuntu 22.04 LTS (Free tier eligible)
       SubnetId: !Ref Subnet
       SecurityGroupIds:
         - !Ref EC2SecurityGroup
@@ -67,12 +67,14 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           apt update -y
-          apt install -y python3 python3-pip git
-          pip3 install flask
+          apt install -y python3 python3-venv git
           cd /home/ubuntu
           git clone https://github.com/X00229873/cloud-poc.git
           cd cloud-poc/apps
-          nohup python3 app.py &
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install flask
+          nohup python app.py &
       Tags:
         - Key: Name
           Value: FlaskPoC-Ubuntu
