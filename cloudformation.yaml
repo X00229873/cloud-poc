@@ -66,8 +66,6 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          exec > /var/log/user-data.log 2>&1
-          set -x
           dnf install -y python3 git
           pip3 install flask
           cd /home/ec2-user
