@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Simple EC2 deployment for Flask app (PoC with automated install)
+Description: Simple EC2 deployment for FastAPI app (PoC with automated install)
 
 Resources:
   VPC:
@@ -59,7 +59,7 @@ Resources:
     Properties:
       InstanceType: t2.micro
       KeyName: EC2CloudAppDeployment
-      ImageId: ami-01ff9fc7721895c6b
+      ImageId: ami-01ff9fc7721895c6b  # Amazon Linux 2023
       SubnetId: !Ref Subnet
       SecurityGroupIds:
         - !Ref EC2SecurityGroup
@@ -67,45 +67,32 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           exec > /var/log/user-data.log 2>&1
-          set -eux
+          set -xe
 
+          # Install Python and Git
           dnf update -y
           dnf install -y python3-pip git
-          pip3 install flask --break-system-packages
 
-          cd /home/ec2-user
-          git clone https://github.com/X00229873/cloud-poc.git || true
-          cd cloud-poc/apps
+          # Install FastAPI and Uvicorn
+          pip3 install fastapi uvicorn
 
-          echo '#!/bin/bash
-          cd /home/ec2-user/cloud-poc/apps
-          nohup python3 app.py --host=0.0.0.0 --port=80 > /home/ec2-user/flask.log 2>&1 &' > /home/ec2-user/start-flask.sh
-          chmod +x /home/ec2-user/start-flask.sh
-
-          cat <<EOF > /etc/systemd/system/flaskapp.service
-          [Unit]
-          Description=Flask App
-          After=network.target
-
-          [Service]
-          Type=simple
-          ExecStart=/home/ec2-user/start-flask.sh
-          Restart=always
-          User=ec2-user
-
-          [Install]
-          WantedBy=multi-user.target
+          # Create FastAPI app
+          cat <<EOF > /home/ec2-user/main.py
+          from fastapi import FastAPI
+          app = FastAPI()
+          @app.get("/")
+          def read_root():
+              return {"message": "Hello from FastAPI on EC2!"}
           EOF
 
-          systemctl daemon-reexec
-          systemctl daemon-reload
-          systemctl enable flaskapp.service
-          systemctl start flaskapp.service
+          # Run FastAPI app
+          nohup uvicorn main:app --host 0.0.0.0 --port 80 > /home/ec2-user/fastapi.log 2>&1 &
+
       Tags:
         - Key: Name
-          Value: FlaskPoC
+          Value: FastAPI-PoC
 
 Outputs:
   EC2PublicIP:
-    Description: "Public IP of the Flask EC2 instance"
+    Description: "Public IP of the FastAPI EC2 instance"
     Value: !GetAtt EC2Instance.PublicIp
