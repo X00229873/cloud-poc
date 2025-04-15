@@ -97,9 +97,6 @@ Resources:
       Port: 80
       TargetType: instance
       HealthCheckPath: /
-      Targets:
-        - Id: !Ref EC2Instance
-          Port: 80
 
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -111,7 +108,7 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref ALBTargetGroup
 
-    EC2Instance:
+  EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
@@ -133,6 +130,13 @@ Resources:
       Tags:
         - Key: Name
           Value: FlaskWebApp
+
+  TargetGroupAttachment:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroupAttachment
+    Properties:
+      TargetGroupArn: !Ref ALBTargetGroup
+      TargetId: !Ref EC2Instance
+      Port: 80
 
 Outputs:
   LoadBalancerURL:
