@@ -15,6 +15,14 @@ Resources:
       MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [ 0, !GetAZs '' ]
 
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+
   InternetGateway:
     Type: AWS::EC2::InternetGateway
 
@@ -41,6 +49,12 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref Subnet
+      RouteTableId: !Ref RouteTable
+
+  Subnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet2
       RouteTableId: !Ref RouteTable
 
   EC2SecurityGroup:
@@ -70,6 +84,7 @@ Resources:
     Properties:
       Subnets:
         - !Ref Subnet
+        - !Ref Subnet2
       SecurityGroups:
         - !Ref ALBSecurityGroup
       Scheme: internet-facing
